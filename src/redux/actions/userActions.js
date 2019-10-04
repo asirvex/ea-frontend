@@ -1,21 +1,18 @@
 import { userConstants } from '../constants/userConstants';
 import Signup from '../../components/signup/signup';
+import axios from '../../utils/httpRequests'
 
 const { LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE,
     SIGNUP_REQUEST, SIGNUP_SUCCESS, SIGNUP_FAILURE } = userConstants;
 
-export const loginRequest = () => dispatch => {
+export const loginRequest = loginData => dispatch => {
     dispatch({type: LOGIN_REQUEST})
-    fetch('https://jsonplaceholder.typicode.com/posts')
-        .then(res => res.json())
-        .then(data => dispatch({
-            type: LOGIN_SUCCESS,
-            payload: data
-        }))
-        .catch(err => dispatch({
-            type: LOGIN_FAILURE,
-            error: err
-        }))
+    axios.post(`/api/auth/login/`, loginData )
+        .then(response => {
+            console.log('response', response);
+        }, error => {
+            console.log('error', error.response);
+        })
 }
 
 export const signupRequest = signupData => dispatch => {

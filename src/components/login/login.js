@@ -4,25 +4,90 @@ import { loginRequest } from '../../redux/actions/userActions';
 import './login.css'
 
 class Login extends Component {
-    componentDidMount() {
-        this.props.loginRequest();
-    }
 
     state = {
         email: '',
-        password: ''
+        password: '',
+        formErrors: { email: '', password: '' },
+        formState: { email: '', password: '' },
+        emailValid: false,
+        passwordValid: false,
+        formValid: false
+    }  
+
+    initialState = {
+        email: '',
+        password: '',
+        formErrors: { email: '', password: '' },
+        formState: { email: '', password: '' },
+        emailValid: false,
+        passwordValid: false,
+        formValid: false
     }
 
     changeHandler = e => {
-        this.setState({ [e.target.name]: e.target.value })
+        let { formState } = this.state;
+        const name = e.target.name
+        const value = e.target.value;
+        this.setState({ [name]: value })
+        this.setState({ formState: {...formState, [name]: 'touched'}})
+        if(name === "email") {
+            this.validateEmail(value);
+        }
+        if(name === "password") {
+            this.validatePassword(value);
+        }
     }
 
+    validateEmail = (value) => {
+        const emailValid = value.match(/^([\w.%+-]+)@([\w-]+\.)+([\w]{2,})$/i) ? true : false;
+        this.setState({ emailValid });
+        return emailValid;
+    }
+    validatePassword = (password) => {
+        const passwordValid = password.length > 6;
+        this.setState({ passwordValid });
+        return passwordValid;
+    }
+    validateFields() {
+        const {email, password, formErrors} = this.state;
+        const emailValid = this.validateEmail(email);
+        const passwordValid = this.validatePassword(password);
+        if (!emailValid) {
+            this.setState({emailValid: false, formErrors: {...formErrors, email: 'email is invalid' } });
+        } else {
+            this.setState({emailValid: true, formErrors: {...formErrors, email: ''}});
+        }
+        if (passwordValid) {
+            this.setState({passwordValid: true, formErrors: {...formErrors, password: ''}});
+        } else {
+            this.setState({passwordValid: false, formErrors: {...formErrors, password: 'password is invalid'}});
+        }
+    }
+
+    async validateForm() {
+        await this.setState({formValid: this.state.emailValid && this.state.passwordValid});
+        return this.state.formValid;
+    }
+
+    resetForm() {
+        this.setState(this.initialState);
+    }
+      
     submitHandler = e => {
-        this.props.loginRequest();
+        e.preventDefault();
+        const { email, password, passwordValid, emailValid } = this.state
+        this.validateFields();
+        const formValid = passwordValid && emailValid
+        if(formValid) {
+            this.props.loginRequest({email, password});
+            this.resetForm();
+        }
+        
     }
 
     render() {
-        const { email, password } = this.state
+        const { email, emailValid, password, passwordValid, formState, formErrors } = this.state
         return (
             <div className="container">
               <div className="row h-100">
@@ -30,13 +95,13 @@ class Login extends Component {
                   <div className="card card-signin my-5">
                     <div className="card-body">
                       <h5 className="card-title text-center">Sign In</h5>
-                      <form className="form-signin" onSubmit={this.submitHandler}>
+                      <form className="form-signin" onSubmit={this.submitHandler} noValidate>
                         <div className="form-label-group">
                           <input 
                             type="email"
                             id="inputEmail"
                             name="email"
-                            className="form-control"
+                            className={ formState.email === "touched" ? emailValid ? "form-control is-valid": "form-control is-invalid" : "form-control" } 
                             value={email}
                             placeholder="Email address"
                             onChange={this.changeHandler}
@@ -47,17 +112,16 @@ class Login extends Component {
                         <div className="form-label-group">
                           <input 
                           type="password"
-                          name="password"
                           id="inputPassword"
-                          className="form-control"
+                          name="password"
+                          value={ password }
+                          id="inputPassword"
+                          className= {formState.password === "touched" ? passwordValid ? "form-control is-valid" : "form-control is-invalid" : "form-control" }
                           placeholder="Password"
+                          onChange={this.changeHandler}
                           required />
                           <label htmlFor="inputPassword">Password</label>
-                        </div>
-          
-                        <div className="custom-control custom-checkbox mb-3">
-                          <input type="checkbox" className="custom-control-input" id="customCheck1" />
-                          <label className="custom-control-label" htmlFor="customCheck1">Remember password</label>
+                          <div className="invalid-feedback text-center">Password is not valid</div>
                         </div>
                         <button className="btn btn-lg btn-primary btn-block text-uppercase" type="submit">Sign in</button>
                         <hr className="my-4" />

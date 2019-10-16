@@ -1,27 +1,54 @@
 import React from 'react';
 import './App.css';
-import axios from 'axios';
+import { Route, Switch, Redirect, BrowserRouter as Router } from 'react-router-dom';
+import { connect } from 'react-redux';
+import '../../node_modules/bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/css/bootstrap.css';
+import Signup from '../components/signup/signup';
+import Login from '../components/login/login';
+import NavbarPage from '../components/navigation/navigationBar';
+import { history } from '../utils/history';
+import { alertActions } from '../redux/actions/alertActions';
+import { PrivateRoute } from '../components/privateRoute/index';
+import HomePage from '../components/homepage/homepage';
 
 
 class App extends React.Component {
-  state = {
-    nextText: ['Hello World', 'you pressed it', 'you pressed it again'],
-    number: 0
+  constructor(props) {
+    super(props);
+
+    history.listen((location, action) => {
+        // clear alert on location change
+        this.props.clearAlerts();
+    });
   }
-
-  number = 0
+  
   render(){
-
+    const { alert } = this.props;
     return (
-        <div className="card">
-          <div className="card-body">
-            <h5 className="card-title">Card title</h5>
-            <p className="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-            <a href="#" className="btn btn-primary">Go somewhere</a>
-          </div>
-        </div>
+      <div>
+          <Router history={history}>
+              <Switch>
+                  <Route exact path="/" component={HomePage} />
+                  <Route path="/login" component={Login} />
+                  <Route path="/signup" component={Signup} />
+                  <Redirect from="*" to="/" />
+              </Switch>
+          </Router>
+      </div>
     );
   }
 }
 
-export default App;
+
+function mapState(state) {
+  const { alert } = state;
+  return { alert };
+}
+
+const actionCreators = {
+  clearAlerts: alertActions.clear
+};
+
+const connectedApp = connect(mapState, actionCreators)(App);
+export { connectedApp as App };

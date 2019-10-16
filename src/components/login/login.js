@@ -1,18 +1,19 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { loginRequest } from '../../redux/actions/userActions';
-import './login.css'
+import './login.css';
+import NavigationBar from '../navigation/navigationBar';
 
 class Login extends Component {
 
     state = {
-        email: '',
-        password: '',
-        formErrors: { email: '', password: '' },
-        formState: { email: '', password: '' },
-        emailValid: false,
-        passwordValid: false,
-        formValid: false
+			email: '',
+			password: '',
+			formErrors: { email: '', password: '' },
+			formState: { email: '', password: '' },
+			emailValid: false,
+			passwordValid: false,
+			formValid: false
     }  
 
     initialState = {
@@ -40,33 +41,34 @@ class Login extends Component {
     }
 
     validateEmail = (value) => {
+        const { formErrors } = this.state;
         const emailValid = value.match(/^([\w.%+-]+)@([\w-]+\.)+([\w]{2,})$/i) ? true : false;
-        this.setState({ emailValid });
+        if (emailValid) {
+            this.setState({emailValid: true, formErrors: {...formErrors, email: ''}})
+        } else {
+            this.setState({emailValid: false, formErrors: {...formErrors, email: 'Invalid email' } });
+        }
         return emailValid;
     }
     validatePassword = (password) => {
-        const passwordValid = password.length > 6;
+        const passwordValid = password.length >= 6;
+        const { formErrors } = this.state;
         this.setState({ passwordValid });
-        return passwordValid;
-    }
-    validateFields() {
-        const {email, password, formErrors} = this.state;
-        const emailValid = this.validateEmail(email);
-        const passwordValid = this.validatePassword(password);
-        if (!emailValid) {
-            this.setState({emailValid: false, formErrors: {...formErrors, email: 'email is invalid' } });
-        } else {
-            this.setState({emailValid: true, formErrors: {...formErrors, email: ''}});
-        }
         if (passwordValid) {
             this.setState({passwordValid: true, formErrors: {...formErrors, password: ''}});
         } else {
-            this.setState({passwordValid: false, formErrors: {...formErrors, password: 'password is invalid'}});
+            this.setState({passwordValid: false, formErrors: {...formErrors, password: 'Invalid password'}});
         }
+        return passwordValid;
     }
 
-    async validateForm() {
-        await this.setState({formValid: this.state.emailValid && this.state.passwordValid});
+    validateFields(email, password) {
+        this.validateEmail(email);
+        this.validatePassword(password);
+    }
+    
+    validateForm() {
+        this.setState({formValid: this.state.emailValid && this.state.passwordValid});
         return this.state.formValid;
     }
 
@@ -77,18 +79,19 @@ class Login extends Component {
     submitHandler = e => {
         e.preventDefault();
         const { email, password, passwordValid, emailValid } = this.state
-        this.validateFields();
+        this.validateFields(email, password);
         const formValid = passwordValid && emailValid
         if(formValid) {
             this.props.loginRequest({email, password});
             this.resetForm();
-        }
-        
+        }   
     }
 
     render() {
         const { email, emailValid, password, passwordValid, formState, formErrors } = this.state
         return (
+					<div>
+						<NavigationBar />
             <div className="container">
               <div className="row h-100">
                 <div className="col-sm-9 col-md-7 col-lg-5 mx-auto">
@@ -107,6 +110,7 @@ class Login extends Component {
                             onChange={this.changeHandler}
                             required />
                           <label htmlFor="inputEmail">Email address</label>
+                          <div className="invalid-feedback">{formErrors.email}</div>
                         </div>
           
                         <div className="form-label-group">
@@ -121,7 +125,7 @@ class Login extends Component {
                           onChange={this.changeHandler}
                           required />
                           <label htmlFor="inputPassword">Password</label>
-                          <div className="invalid-feedback text-center">Password is not valid</div>
+                          <div className="invalid-feedback">{formErrors.password}</div>
                         </div>
                         <button className="btn btn-lg btn-primary btn-block text-uppercase" type="submit">Sign in</button>
                         <hr className="my-4" />
@@ -133,6 +137,7 @@ class Login extends Component {
                 </div>
               </div>
             </div>
+					</div>
         )
   }
 }
